@@ -1,0 +1,70 @@
+# 自动构建并部署到 GitHub Pages（在线预览）
+# 触发：push 到 main 分支，或手动运行（workflow_dispatch）
+#
+# 使用前（一次性配置）：
+#   1. 仓库 Settings → Pages → Source 选 "GitHub Actions"
+#   2. 仓库 Settings → Secrets and variables → Actions 添加两个 Secret：
+#        VITE_TDT_TOKEN   —— 天地图 key
+#        VITE_ION_TOKEN   —— Cesium ion token
+#   3. .env 已被 .gitignore 排除，不会上传；CI 里由 secrets 临时生成
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 允许 actions 写入 GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # 由 secrets 生成 .env（本地 .env 不上传，key 只在 CI 环境临时存在）
+      - name: Generate .env from secrets
+        run: |
+          echo "VITE_TDT_TOKEN=${{ secrets.VITE_TDT_TOKEN }}" > .env
+          echo "VITE_ION_TOKEN=${{ secrets.VITE_ION_TOKEN }}" >> .env
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 用仓库名作为 GitHub Pages 子路径（user.github.io/<仓库名>/）
+      - name: Build
+        run: npm run build
+        env:
+          GH_BASE: /${{ github.event.repository.name }}/
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
