@@ -47,11 +47,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 用仓库名作为 GitHub Pages 子路径（user.github.io/<仓库名>/）
+      # vite 已用相对 base（./），无需注入 GH_BASE，产物可直接部署到 GitHub Pages 子路径
       - name: Build
         run: npm run build
-        env:
-          GH_BASE: /${{ github.event.repository.name }}/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

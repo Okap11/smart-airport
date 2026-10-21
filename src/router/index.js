@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
   {
@@ -16,7 +16,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  // hash 模式：兼容 GitHub Pages 子路径部署，刷新深层路由不 404
+  history: createWebHashHistory(),
   routes
 })
 
