@@ -53,8 +53,8 @@ npm run build && npm run preview
 
 | 配置 | 用途 | 申请地址 |
 |---|---|---|
-| 天地图 Key | 加载天地图影像底图 | https://console.tianditu.gov.cn/ |
-| Cesium ion Token | 加载 ion 示例 3DTiles | https://ion.cesium.com/ |
+| 天地图 Key | 加载天地图影像底图 | https://cloudcenter.tianditu.gov.cn/center/development/myApp |
+| Cesium ion Token | 加载 ion 示例 3DTiles | https://ion.cesium.com/tokens |
 
 **项目根目录创建 `.env`**（推荐，`.env` 已被 gitignore 排除，不会上传）：
 
@@ -146,19 +146,16 @@ smart-airport/
 ├── .env                             # 本地 Key（gitignore，不提交）
 └── .npmrc                           # 指定官方 npm registry
 ```
-
-> 代码风格：三维实体采用**工厂函数 + 闭包 + 箭头函数**（无 class），状态封在闭包内，返回一组纯方法。
-
 ---
 
 ## 🛠 技术要点
 
 ### Cesium + Vite 集成
-使用 `vite-plugin-cesium` 自动处理 Cesium 的**静态资源、worker、CSS、global**，无需手动拷贝文件、配置 worker 路径，避免「Cesium 在 Vite 里跑不起来」的常见问题。
+使用 `vite-plugin-cesium` 自动处理 Cesium 的**静态资源、worker、CSS、global**，无需手动拷贝文件、配置 worker 路径，避免常见问题。
 
 ### 相机跟随实现
 `CameraFollow.js`（工厂函数）在 `scene.preRender` 回调中逐帧根据飞机位置/航向更新相机：
-- 默认后方跟随：`lookAt(target, HPR(heading - π/2, pitch, distance))` 保证飞机居中（修正了 Cesium 相机方位的 -90° 偏移）
+- 默认后方跟随：`lookAt(target, HPR(heading - π/2, pitch, distance))` 保证飞机居中
 - 视角预设：设置 `override = { relHeading, pitch, distance }`，相机以**相对飞机航向**的方位持续跟随，飞机转向时视角自动跟随
 
 ### 飞机飞行
@@ -188,8 +185,6 @@ npm ci → 用 Secrets 生成 .env → npm run build（注入 GH_BASE）→ 部�
 - `.gitignore` 已排除 `.env` 和 `.env.*`（仅保留 `.env.example`），Key **不会上传**
 - CI 里由 **Secrets** 临时生成 `.env`，构建后即丢弃，Key 不落入产物之外的任何位置
 - `vite.config.js` 用 `base: process.env.GH_BASE || '/'`：本地根路径，GitHub 子路径 `/仓库名/` 自动识别
-
-预览地址：`https://<用户名>.github.io/<仓库名>/`
 
 ---
 
