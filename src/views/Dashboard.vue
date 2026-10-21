@@ -46,12 +46,12 @@
       type="info"
       show-icon
       message="使用前请配置 Key（免费申请）"
-      description="天地图 key（console.tianditu.gov.cn 申请）与 Cesium ion token（ion.cesium.com 注册）填入项目根目录 .env，或在 src/config/index.js 中填写。未配置时底图自动兜底为 OpenStreetMap。"
+      description="天地图 key（console.tianditu.gov.cn 申请）与 Cesium ion token（ion.cesium.com 注册）填入项目根目录 .env，或在 src/config/index.ts 中填写。未配置时底图自动兜底为 OpenStreetMap。"
     />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ChartPanel from '@/components/ChartPanel.vue'
@@ -61,12 +61,13 @@ import {
   getParkingDistribution,
   getAlarmDistribution
 } from '@/api/mock'
+import type { EChartsOption } from 'echarts'
 
 const router = useRouter()
 
 const stats = getOverviewStats()
 
-const passengerOption = computed(() => {
+const passengerOption = computed<EChartsOption>(() => {
   const d = getPassengerTrend()
   return {
     tooltip: { trigger: 'axis' },
@@ -84,7 +85,7 @@ const passengerOption = computed(() => {
   }
 })
 
-const parkingOption = computed(() => {
+const parkingOption = computed<EChartsOption>(() => {
   return {
     tooltip: { trigger: 'item' },
     legend: { bottom: 0, textStyle: { fontSize: 10 } },
@@ -99,7 +100,7 @@ const parkingOption = computed(() => {
   }
 })
 
-const alarmOption = computed(() => {
+const alarmOption = computed<EChartsOption>(() => {
   const d = getAlarmDistribution()
   return {
     tooltip: { trigger: 'axis' },

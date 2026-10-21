@@ -2,14 +2,17 @@
   <div ref="container" class="cesium-container" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as Cesium from 'cesium'
 import { initViewer, getViewer, destroyViewer } from '@/hooks/useCesium'
 import { loadImagery } from './layers/BaseLayer'
+import type { ImageryResult } from './layers/BaseLayer'
 import { loadTileset } from './layers/TilesetLayer'
 import { createAircraft } from './entity/AircraftEntity'
+import type { Aircraft } from './entity/AircraftEntity'
 import { use3dStore } from '@/stores/use3dStore'
+import type { FollowMode } from '@/config'
 
 /**
  * Cesium 场景容器组件
@@ -17,33 +20,38 @@ import { use3dStore } from '@/stores/use3dStore'
  *       并监听 store 的图层开关做显隐联动。
  * 纯场景装配，业务 UI 由父组件（Scene.vue）控制。
  */
-const container = ref(null)
+const container = ref<HTMLDivElement | null>(null)
 const store = use3dStore()
-const emit = defineEmits(['ready', 'error'])
+const emit = defineEmits<{
+  ready: [viewer: Cesium.Viewer]
+  error: [e: unknown]
+}>()
 
-let aircraft = null
-let tilesetObj = null
-let imagery = { base: null, annotation: null }
+let aircraft: Aircraft | null = null
+let tilesetObj: Cesium.Cesium3DTileset | null = null
+let imagery: ImageryResult | null = null
 
 onMounted(async () => {
   store.loading = true
   store.error = null
+  const el = container.value
+  if (!el) return
   try {
-    initViewer(container.value)
-    imagery = await loadImagery(getViewer())
+    initViewer(el)
+    imagery = await loadImagery(getViewer()!)
     store.baseLoaded = true
 
-    tilesetObj = await loadTileset(getViewer())
+    tilesetObj = await loadTileset(getViewer()!)
     store.tilesetLoaded = !!tilesetObj
 
-    aircraft = createAircraft(getViewer())
+    aircraft = createAircraft(getViewer()!)
     await aircraft.init()
     store.aircraftLoaded = true
 
-    emit('ready', getViewer())
+    emit('ready', getViewer()!)
   } catch (e) {
     console.error('[CesiumViewer] 初始化失败', e)
-    store.error = e?.message || String(e)
+    store.error = e instanceof Error ? e.message : String(e)
     emit('error', e)
   } finally {
     store.loading = false
@@ -56,10 +64,10 @@ watch(
   (val) => {
     const v = getViewer()
     if (!v) return
-    if (imagery.base) imagery.base.show = !!val.base
-    if (imagery.annotation) imagery.annotation.show = !!val.annotation
+    if (imagery?.base) imagery.base.show = !!val.base
+    if (imagery?.annotation) imagery.annotation.show = !!val.annotation
     if (tilesetObj) tilesetObj.show = !!val.tileset
-    if (aircraft?.setVisible) aircraft.setVisible(!!val.aircraft)
+    if (aircraft) aircraft.setVisible(!!val.aircraft)
   },
   { deep: true }
 )
@@ -70,12 +78,12 @@ onBeforeUnmount(() => {
 })
 
 /** 切换相机跟随模式 latlon | enu | none */
-function setFollowMode(mode) {
+function setFollowMode(mode: FollowMode): void {
   aircraft?.setFollowMode(mode)
 }
 
 /** 启用/关闭键盘手动控制飞机飞行方向 */
-function setManualControl(on) {
+function setManualControl(on: boolean): void {
   aircraft?.setManualControl(on)
 }
 
@@ -90,12 +98,12 @@ const VIEW_PRESETS = {
   left: { relHeading: 0, pitch: 0, range: 800 }, // 飞机左侧
   right: { relHeading: Math.PI, pitch: 0, range: 800 } // 飞机右侧
 }
+type ViewPresetKey = keyof typeof VIEW_PRESETS
 
-function setViewPreset(view) {
+function setViewPreset(view: ViewPresetKey): void {
   const v = getViewer()
   if (!v || !aircraft) return
   const p = VIEW_PRESETS[view]
-  if (!p) return
   // 设置跟随视角预设，不切换跟随模式，视角持续跟随飞机
   aircraft.follow.setViewPreset({
     relHeading: p.relHeading,

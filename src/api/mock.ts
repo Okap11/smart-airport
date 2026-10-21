@@ -5,7 +5,40 @@
  */
 
 /** 航班 24h 架次趋势 */
-export function getFlightTrend() {
+export interface FlightTrend {
+  hours: string[]
+  depart: number[]
+  arrive: number[]
+}
+
+/** 旅客吞吐量（周） */
+export interface PassengerTrend {
+  week: string[]
+  data: number[]
+}
+
+/** 机位占用分布项 */
+export interface ParkingItem {
+  value: number
+  name: string
+}
+
+/** 告警类型分布 */
+export interface AlarmDistribution {
+  types: string[]
+  data: number[]
+}
+
+/** 业务统计 */
+export interface OverviewStats {
+  flightCount: number
+  parkingRate: number
+  deviceOnlineRate: number
+  alarmCount: number
+}
+
+/** 航班 24h 架次趋势 */
+export function getFlightTrend(): FlightTrend {
   const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`)
   return {
     hours,
@@ -15,7 +48,7 @@ export function getFlightTrend() {
 }
 
 /** 旅客吞吐量（周） */
-export function getPassengerTrend() {
+export function getPassengerTrend(): PassengerTrend {
   return {
     week: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
     data: [68, 72, 75, 71, 82, 96, 88]
@@ -23,7 +56,7 @@ export function getPassengerTrend() {
 }
 
 /** 机位占用分布 */
-export function getParkingDistribution() {
+export function getParkingDistribution(): ParkingItem[] {
   return [
     { value: 62, name: '占用' },
     { value: 30, name: '空闲' },
@@ -32,7 +65,7 @@ export function getParkingDistribution() {
 }
 
 /** 告警类型分布 */
-export function getAlarmDistribution() {
+export function getAlarmDistribution(): AlarmDistribution {
   return {
     types: ['入侵', '越界', '设备故障', '消防', '其他'],
     data: [12, 8, 5, 3, 2]
@@ -40,7 +73,7 @@ export function getAlarmDistribution() {
 }
 
 /** 业务统计 */
-export function getOverviewStats() {
+export function getOverviewStats(): OverviewStats {
   return {
     flightCount: 186,
     parkingRate: 62,

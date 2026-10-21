@@ -10,8 +10,68 @@
  *   VITE_ION_TOKEN=xxx
  */
 
+/** 天地图图层名集合 */
+export interface TdtLayerConfig {
+  vec: string
+  cva: string
+  img: string
+  cia: string
+  ter: string
+  cta: string
+}
+
 /** 天地图底图配置 */
-export const tdt = {
+export interface TdtConfig {
+  token: string
+  host: string
+  layers: TdtLayerConfig
+}
+
+/** Cesium ion 配置 */
+export interface IonConfig {
+  token: string
+}
+
+/** 3DTiles 加载模式 */
+export type TilesetMode = 'ion' | 'local' | 'auto'
+
+/** 3DTiles 场景配置 */
+export interface TilesetConfig {
+  ionAssetId: number
+  localUrl: string
+  mode: TilesetMode
+  flyTo: { lon: number; lat: number; height: number }
+}
+
+/** 相机跟随模式 */
+export type FollowMode = 'latlon' | 'enu' | 'none'
+
+/** 飞机模型配置 */
+export interface AircraftConfig {
+  url: string
+  start: { lon: number; lat: number; height: number }
+  takeoffHeading: number
+  cruiseHeight: number
+  speed: number
+  climbDistance: number
+  followMode: FollowMode
+  modelHeadingOffset: number
+  manualControl: boolean
+  turnRate: number
+  climbRate: number
+  maxHeight: number
+  bankAngle: number
+  climbPitchAngle: number
+  minimumPixelSize: number
+  maximumScale: number
+  scale: number
+  followDistance: number
+  followHeightOffset: number
+  followPitch: number
+}
+
+/** 天地图底图配置 */
+export const tdt: TdtConfig = {
   token: import.meta.env.VITE_TDT_TOKEN || '',
   // 天地图服务域名
   host: 'https://t1.tianditu.gov.cn',
@@ -27,12 +87,12 @@ export const tdt = {
 }
 
 /** Cesium ion 配置（用于加载示例 3DTiles / OSM 建筑等） */
-export const ion = {
+export const ion: IonConfig = {
   token: import.meta.env.VITE_ION_TOKEN || ''
 }
 
 /** 3DTiles 场景配置 */
-export const tileset = {
+export const tileset: TilesetConfig = {
   // 方式一：Cesium ion 资产（需填 ionToken），示例用旧金山实景网格
   ionAssetId: 4691, // Aerometrex San Francisco（若 token 无该资产权限可自行更换）
   // 方式二：本地 3DTiles 目录（把 tileset.json + 瓦片放进 src/assets/cesium/tileset/）
@@ -44,7 +104,7 @@ export const tileset = {
 }
 
 /** 飞机模型配置 */
-export const aircraft = {
+export const aircraft: AircraftConfig = {
   // 本地 glb 模型（相对路径，兼容 GitHub Pages 子路径部署；勿用 / 开头）
   url: 'models/plane.glb',
   // 起飞点（跑道/停机位），height 为起飞高度(建议 0=地面)

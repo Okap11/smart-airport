@@ -1,5 +1,6 @@
 import * as Cesium from 'cesium'
 import { tileset, ion } from '@/config'
+import type { TilesetConfig } from '@/config'
 import { flyToBoundingSphere } from '@/hooks/useCesium'
 
 /**
@@ -10,24 +11,31 @@ import { flyToBoundingSphere } from '@/hooks/useCesium'
  *  - auto：优先 ion，无 token 则 local
  */
 
+function errMsg(e: unknown): string {
+  return e instanceof Error ? e.message : String(e)
+}
+
 /**
  * 加载 3DTiles 并飞至包围球
- * @param {Cesium.Viewer} viewer
- * @param {object} [options] 覆盖 tileset 配置
- * @returns {Promise<Cesium.Cesium3DTileset|null>}
+ * @param viewer
+ * @param options 覆盖 tileset 配置
+ * @returns 加载成功返回 tileset，失败返回 null
  */
-export async function loadTileset(viewer, options = {}) {
-  const cfg = { ...tileset, ...options }
-  let tilesetObj = null
+export async function loadTileset(
+  viewer: Cesium.Viewer,
+  options: Partial<TilesetConfig> = {}
+): Promise<Cesium.Cesium3DTileset | null> {
+  const cfg: TilesetConfig = { ...tileset, ...options }
+  let tilesetObj: Cesium.Cesium3DTileset | null = null
 
-  const canIon = cfg.mode === 'ion' || (cfg.mode === 'auto' && ion.token)
-  const canLocal = cfg.mode === 'local' || (cfg.mode === 'auto')
+  const canIon = cfg.mode === 'ion' || (cfg.mode === 'auto' && !!ion.token)
+  const canLocal = cfg.mode === 'local' || cfg.mode === 'auto'
 
   if (canIon) {
     try {
       tilesetObj = await Cesium.Cesium3DTileset.fromIonAssetId(cfg.ionAssetId)
     } catch (e) {
-      console.warn('[TilesetLayer] ion 资产加载失败，尝试本地', e.message)
+      console.warn('[TilesetLayer] ion 资产加载失败，尝试本地', errMsg(e))
       if (cfg.mode === 'ion') return null
     }
   }
@@ -36,7 +44,7 @@ export async function loadTileset(viewer, options = {}) {
     try {
       tilesetObj = await Cesium.Cesium3DTileset.fromUrl(cfg.localUrl)
     } catch (e) {
-      console.warn('[TilesetLayer] 本地 tileset 加载失败（可能尚未放置数据）', e.message)
+      console.warn('[TilesetLayer] 本地 tileset 加载失败（可能尚未放置数据）', errMsg(e))
       return null
     }
   }
@@ -56,11 +64,16 @@ export async function loadTileset(viewer, options = {}) {
       duration: 2
     })
   } else {
-    // 等待 tileset 就绪后计算包围球
-    loadedTileset.readyEvent.addEventListener(() => {
+    // 等待 tileset 就绪后计算包围球（readyEvent 在部分类型定义中缺失，做兼容断言）
+    const tilesetWithReady = loadedTileset as unknown as {
+      readyEvent: { addEventListener(cb: () => void): void }
+    }
+    tilesetWithReady.readyEvent.addEventListener(() => {
       try {
         flyToBoundingSphere(loadedTileset.boundingSphere, 2)
-      } catch (_) {}
+      } catch {
+        /* 忽略包围球计算失败 */
+      }
     })
   }
 
@@ -68,7 +81,10 @@ export async function loadTileset(viewer, options = {}) {
 }
 
 /** 卸载 3DTiles */
-export function removeTileset(viewer, tilesetObj) {
+export function removeTileset(
+  viewer: Cesium.Viewer,
+  tilesetObj: Cesium.Cesium3DTileset | null
+): void {
   if (viewer && tilesetObj) {
     viewer.scene.primitives.remove(tilesetObj)
   }

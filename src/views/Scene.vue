@@ -11,7 +11,7 @@
         <a-radio-group
           :value="store.followMode"
           size="small"
-          @change="(e) => onFollowChange(e.target.value)"
+          @change="onFollowChange"
         >
           <a-radio-button value="latlon">经纬度跟随</a-radio-button>
           <a-radio-button value="enu">ENU 精确跟随</a-radio-button>
@@ -22,7 +22,7 @@
         <a-radio-group
           :value="viewPreset"
           size="small"
-          @change="(e) => onViewPreset(e.target.value)"
+          @change="onViewPreset"
         >
           <a-radio-button value="front">前</a-radio-button>
           <a-radio-button value="back">后</a-radio-button>
@@ -49,25 +49,25 @@
         <div class="layer-item">
           <a-checkbox
             :checked="store.layers.base"
-            @change="(e) => onToggle('base', e.target.checked)"
+            @change="onToggle('base', $event)"
           >影像底图</a-checkbox>
         </div>
         <div class="layer-item">
           <a-checkbox
             :checked="store.layers.annotation"
-            @change="(e) => onToggle('annotation', e.target.checked)"
+            @change="onToggle('annotation', $event)"
           >注记</a-checkbox>
         </div>
         <div class="layer-item">
           <a-checkbox
             :checked="store.layers.tileset"
-            @change="(e) => onToggle('tileset', e.target.checked)"
+            @change="onToggle('tileset', $event)"
           >3DTiles 场景</a-checkbox>
         </div>
         <div class="layer-item">
           <a-checkbox
             :checked="store.layers.aircraft"
-            @change="(e) => onToggle('aircraft', e.target.checked)"
+            @change="onToggle('aircraft', $event)"
           >飞机模型</a-checkbox>
         </div>
       </a-card>
@@ -94,53 +94,62 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import CesiumViewer from '@/components/3d/CesiumViewer.vue'
 import ChartPanel from '@/components/ChartPanel.vue'
 import { use3dStore } from '@/stores/use3dStore'
 import { getFlightTrend } from '@/api/mock'
+import type { FollowMode } from '@/config'
+import type { EChartsOption } from 'echarts'
+
+/** 预设视角 key */
+type ViewPresetKey = 'front' | 'back' | 'left' | 'right'
+/** 图层 key */
+type LayerKey = keyof ReturnType<typeof use3dStore>['layers']
 
 const router = useRouter()
 const store = use3dStore()
-const viewerRef = ref(null)
+const viewerRef = ref<InstanceType<typeof CesiumViewer> | null>(null)
 
-function onReady(viewer) {
+function onReady(viewer: unknown) {
   console.log('[Scene] 场景就绪，viewer 已创建', viewer)
 }
 
-function onError(e) {
+function onError(e: unknown) {
   console.error('[Scene] 场景加载失败', e)
 }
 
-function onToggle(key, checked) {
-  if (checked !== store.layers[key]) {
-    store.layers[key] = checked
+function onToggle(key: LayerKey, e: { target: { checked: boolean } }) {
+  if (e.target.checked !== store.layers[key]) {
+    store.layers[key] = e.target.checked
   }
 }
 
-function onFollowChange(mode) {
+function onFollowChange(e: { target: { value: string } }) {
+  const mode = e.target.value as FollowMode
   store.setFollowMode(mode)
   viewerRef.value?.setFollowMode(mode)
 }
 
 /** 切换预设视角（前/后/左/右）：保持当前跟随，相机以该视角持续跟随飞机 */
-const viewPreset = ref('back') // 默认视角：后方
+const viewPreset = ref<ViewPresetKey>('back') // 默认视角：后方
 
-function onViewPreset(view) {
+function onViewPreset(e: { target: { value: string } }) {
+  const view = e.target.value as ViewPresetKey
   viewPreset.value = view
   viewerRef.value?.setViewPreset(view)
 }
 
 /** 键盘控制开关：开启后可用方向键/WASD 控制飞机飞行方向 */
-function onManualControl(checked) {
+function onManualControl(checked: boolean) {
   store.setManualControl(checked)
   viewerRef.value?.setManualControl(checked)
 }
 
-// —— 模拟航班趋势数据（来自数据层 api/mock.js）——
-const flightOption = computed(() => {
+// —— 模拟航班趋势数据（来自数据层 api/mock.ts）——
+const flightOption = computed<EChartsOption>(() => {
   const d = getFlightTrend()
   return {
     tooltip: { trigger: 'axis' },

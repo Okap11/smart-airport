@@ -2,23 +2,25 @@
   <div ref="el" class="echart" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as echarts from 'echarts'
+import type { EChartsOption } from 'echarts'
 
 /**
  * 轻量 ECharts 封装：自动初始化 / 销毁 / 响应式尺寸 / option 热更新
  */
-const props = defineProps({
-  option: { type: Object, required: true }
-})
+const props = defineProps<{
+  option: EChartsOption
+}>()
 
-const el = ref(null)
-let chart = null
+const el = ref<HTMLDivElement | null>(null)
+let chart: echarts.ECharts | null = null
 
 const resize = () => chart?.resize()
 
 onMounted(() => {
+  if (!el.value) return
   chart = echarts.init(el.value)
   chart.setOption(props.option)
   window.addEventListener('resize', resize)

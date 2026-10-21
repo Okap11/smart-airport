@@ -8,17 +8,22 @@ import { tdt } from '@/config'
  * 在 Cesium 1.146 下返回的 layer.provider 为空的问题。
  */
 
+/** 加载影像底图的结果 */
+export interface ImageryResult {
+  base: Cesium.ImageryLayer
+  annotation: Cesium.ImageryLayer | null
+}
+
 /** 天地图 WMTS 请求模板（XYZ 风格） */
-function tdtUrl(layer, tk) {
+function tdtUrl(layer: string, tk: string): string {
   return `${tdt.host}/${layer}/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer.slice(0, 3)}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${tk}`
 }
 
 /**
  * 加载影像底图
- * @param {Cesium.Viewer} viewer
- * @returns {{base: Cesium.ImageryLayer, annotation: Cesium.ImageryLayer|null}}
+ * @param viewer
  */
-export function loadImagery(viewer) {
+export function loadImagery(viewer: Cesium.Viewer): ImageryResult {
   const imageryLayers = viewer.imageryLayers
   const tk = tdt.token
 
