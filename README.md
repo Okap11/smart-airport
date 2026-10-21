@@ -7,6 +7,14 @@
 
 ---
 
+## 🚀 在线预览
+
+👉 **https://okap11.github.io/smart-airport/#/scene**
+
+> GitHub Actions 自动构建部署，push 到 `main` 分支即自动更新预览。
+
+---
+
 ## ✨ 功能特性
 
 ### 三维场景

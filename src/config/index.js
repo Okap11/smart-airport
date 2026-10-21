@@ -45,8 +45,8 @@ export const tileset = {
 
 /** 飞机模型配置 */
 export const aircraft = {
-  // 本地 glb 模型（已随项目放置于 public 或 assets）
-  url: '/models/plane.glb',
+  // 本地 glb 模型（相对路径，兼容 GitHub Pages 子路径部署；勿用 / 开头）
+  url: 'models/plane.glb',
   // 起飞点（跑道/停机位），height 为起飞高度(建议 0=地面)
   start: { lon: -122.4, lat: 37.815, height: 0 },
   // 起飞/飞行方向(度，0=北，顺时针；90=东)
